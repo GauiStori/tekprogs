@@ -4,16 +4,9 @@ def deltaDelayMeasurement(instr):
     print("Example 7: Taking Delta--Delay Measurements")
     print("Ensure that the cable is connected and the scope's parameters are")
     print("set accordingly : (major menu UTILITY, minor menu RS232 Parameters)")
-    print(" Baud 9600, Echo OFF, Stop Bits 1, Parity NONE, Flagging HARD")
+    print(" Baud 19200, Echo OFF, Stop Bits 1, Parity NONE, Flagging HARD")
     print(" Delay 0, EOL String CR/LF, Verbose OFF")
     input(" Press Enter when ready")
-    #a=''
-    #while  a != "COM1" and a != "COM2":
-    #    a = input("Press Enter for using COM1 (default), else type COM2")
-    #    if a == "":
-    #        a = "COM1"
-    #print("We are opening %s at 9600 baud, no parity, and 1 stop bit."%a)
-    #instr = OPEN A:9600,N,8,1
     input("Press Enter to ask for the scope's ID")
     instr.write(b"ID?\r\n")
     response=instr.readline()
@@ -63,7 +56,7 @@ def deltaDelayMeasurement(instr):
     print(response)
     print("(in feet)")
     print("Example Completed.")
-
+    input("Press enter to continue.")
 
 if __name__=="__main__":
     import serial

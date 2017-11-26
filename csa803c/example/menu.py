@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import os
+import os, sys
 import csa803c_compare
 import csa803c_delay_measurements
 import csa803c_display
@@ -19,9 +19,9 @@ s = serial.Serial(serial_dev,
     bytesize=serial.EIGHTBITS,  # number of databits
     parity=serial.PARITY_NONE,  # enable parity checking
     stopbits=serial.STOPBITS_ONE,   # number of stopbits
-    timeout=1,         # set a timeout value, None for waiting forever
-    xonxoff=1,          # enable software flow control
-    rtscts=0            # enable RTS/CTS flow control
+    timeout=5,         # set a timeout value, None for waiting forever
+    xonxoff=0,          # enable software flow control
+    rtscts=1            # enable RTS/CTS flow control
     )
 
 while True:
@@ -45,22 +45,28 @@ while True:
     if prognum == 'Q' or prognum == 'q':
         sys.exit(0)
     #IF LEFT$(PROGNUM$,1)=")S") OR LEFT$(PROGNUM$,1)=")s") THEN SYSTEM
-    prognum = int(prognum)
-    if prognum == 1:
-        csa803c_display.displayTrace(s)
-    elif prognum == 2:
-        csa803c_multiple_traces.multipleTraces(s)
-    elif prognum == 3:
-        csa803c_complex_traces.complexTraces(s)
-    elif prognum == 4:
-        csa803c_signal_processing.doSignalProcessing(s)
-    elif prognum == 5:
-        csa803c_automated_measurements.doAutomatedMeasurements(s)
-    elif prognum == 6:
-        csa803c_delay_measurements.delayMeasurements(s)
-    elif prognum == 7:
-        csa803c_delta_delay.deltaDelayMeasurement(s)
-    elif prognum == 8:
-        csa803c_compare.traceCompare(s)
-    elif prognum == 9:
-        csa803c_tdr.doTdrMeasurement(s)
+    if prognum.isnumeric():
+        prognum = int(prognum)
+        if prognum == 1:
+            csa803c_display.displayTrace(s)
+        elif prognum == 2:
+            csa803c_multiple_traces.multipleTraces(s)
+        elif prognum == 3:
+            csa803c_complex_traces.complexTraces(s)
+        elif prognum == 4:
+            csa803c_signal_processing.doSignalProcessing(s)
+        elif prognum == 5:
+            csa803c_automated_measurements.doAutomatedMeasurements(s)
+        elif prognum == 6:
+            csa803c_delay_measurements.delayMeasurements(s)
+        elif prognum == 7:
+            csa803c_delta_delay.deltaDelayMeasurement(s)
+        elif prognum == 8:
+            csa803c_compare.traceCompare(s)
+        elif prognum == 9:
+            csa803c_tdr.doTdrMeasurement(s)
+        else:
+            print("Error: Invalid input!")
+    else:
+        print("Error: Invalid input!")
+    
