@@ -12,7 +12,11 @@ import csa803c_multiple_traces
 import csa803c_tdr
 import serial
 
-serial_dev='/dev/ttyUSB0'
+if len(sys.argv) < 2:
+    print("Usage: %s <Serial Port>")
+    sys.exit(0)
+
+serial_dev=sys.argv[1]
 s = None
 s = serial.Serial(serial_dev,
     baudrate=19200,         # baudrate
