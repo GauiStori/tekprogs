@@ -24,7 +24,7 @@
 #include <getopt.h>
 #include <signal.h>
 #include <time.h>
-#include <cstring>
+#include <string.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -97,6 +97,7 @@ static int query(char *query, char *buf, int maxsize)
 	return ibcntl;
 	}
 
+#pragma pack(1)
 struct cmd_hdr
 	{
 	uint8_t cmd;
