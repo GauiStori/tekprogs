@@ -24,3 +24,5 @@ the struct. I tried the program on a 64 bit computer.
 
 It should work with any GPIB adapter.
 
+For the TDS694C the command line is:
+tektool -r file.bin -b 0x04000000 -l 0x20000
