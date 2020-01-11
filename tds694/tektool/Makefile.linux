@@ -1,0 +1,9 @@
+
+CC=gcc
+
+all:
+	$(CC) tektool.c -lgpib -o tektool
+
+clean:
+	rm -f tektool *.o
+
