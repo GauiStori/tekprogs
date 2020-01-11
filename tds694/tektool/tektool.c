@@ -265,6 +265,7 @@ static int read_memory(uint32_t addr, uint8_t *buf, int len)
 
 static struct option long_options[] =
 {
+    { "address", required_argument, 0, 'a' },
     { "read", required_argument, 0, 'r' },
     { "write", required_argument, 0, 'w' },
     { "base", required_argument, 0, 'b' },
@@ -274,20 +275,23 @@ static struct option long_options[] =
     { "flash-erase", no_argument, 0, 'e' },
     { "flash-program", required_argument, 0, 'p' },
     { "help", no_argument, 0, 'h' },
+    { "instrument-id", no_argument, 0, 'I' },
     { NULL, 0, 0, 0 }
 };
 
 static void usage(void)
 {
     fprintf(stderr, "usage:\n"
-        "--read         -r <filename>  read from memory to file\n"
-        "--write        -w <filename>  read from file to memory\n"
-        "--base         -b <base>      base address for read/write/program\n"
-        "--length       -l <length>    length of data to be read or written\n"
-        "--debug        -d             enable debug logging\n"
-        "--flash-id     -i             print ID of flash chips\n"
-        "--flash-erase  -e             erase flash at base address\n"
-        "--flsh-program -p             program flash at base address\n"
+        "--address       -a <gpib address> default 1\n"
+        "--read          -r <filename>     read from memory to file\n"
+        "--write         -w <filename>     read from file to memory\n"
+        "--base          -b <base>         base address for read/write/program\n"
+        "--length        -l <length>       length of data to be read or written\n"
+        "--debug         -d                enable debug logging\n"
+        "--flash-id      -i                print ID of flash chips\n"
+        "--flash-erase   -e                erase flash at base address\n"
+        "--flsh-program  -p                program flash at base address\n"
+        "--instrument-id -I                read out instrument id and exit\n"
         "");
 }
 
@@ -591,14 +595,17 @@ int main(int argc, char **argv)
     uint8_t buf[1024];
     int val, optidx;
     FILE *file = NULL;
-    int read_op = 0, write_op = 0, identify_flash_op = 0, erase_flash_op = 0, flash_write_op = 0;
+    int read_op = 0, write_op = 0, identify_flash_op = 0, erase_flash_op = 0, flash_write_op = 0, instrument_id = 0, address = 1;
     int readlen, i;
     time_t start, now;
 
-    while((c = getopt_long(argc, argv, "r:w:b:l:p:hied",
+    while((c = getopt_long(argc, argv, "a:r:w:b:l:p:hiedI",
                    long_options, &optidx)) != -1) {
         switch(c)
         {
+            case 'a':
+                address = to_number(optarg);
+                break;
             case 'h':
                 usage();
                 return 0;
@@ -661,7 +668,43 @@ int main(int argc, char **argv)
             case 'd':
                 debug++;
                 break;
+            case 'I':
+                instrument_id=1;
+                break;
         }
+    }
+
+    if (instrument_id) {
+        printf("Reading Instrument Id.\n");
+        /*device identification - (gpib card, device num, second num, Time out, End of message, disable eos) */
+
+        Dev = ibdev(0, address, 0, T3s, 1, 0);
+        if (ibsta & ERR) {
+            printf("Unable to open device\nibsta = 0x%x iberr = %d\n",
+                ibsta, iberr);
+            return 1;
+        }
+
+        ibclr (Dev);
+        if (ibsta & ERR) {
+            GPIBCleanup(Dev, "Unable to clear device");
+            return 1;
+        }
+
+        /* Test GPIB communication */
+        ibwrt (Dev, "*IDN?", 5L);
+        if (ibsta & ERR) {
+            GPIBCleanup(Dev, "Unable to write to device");
+            return 1;
+        }
+
+        ibrd (Dev, buf, 101);
+        if (ibsta & ERR) {
+            GPIBCleanup(Dev, "Unable to read data from device");
+            return 1;
+        }
+        printf("Device Id: %s\n",buf);
+            return 0;
     }
 
     if (!length) {
@@ -670,34 +713,6 @@ int main(int argc, char **argv)
     }
     signal(SIGINT, sigint_handler);
 
-/*device identification - (gpib card, device num, second num, Time out, End of message, disable eos) */
-
-    Dev = ibdev(0, 1, 0, T3s, 1, 0);
-    if (ibsta & ERR) {
-        printf("Unable to open device\nibsta = 0x%x iberr = %d\n",
-               ibsta, iberr);
-        return 1;
-    }
-
-    ibclr (Dev);
-    if (ibsta & ERR) {
-        GPIBCleanup(Dev, "Unable to clear device");
-        return 1;
-    }
-
-/* Test GPIB communication */
-    ibwrt (Dev, "*IDN?", 5L);
-    if (ibsta & ERR) {
-       GPIBCleanup(Dev, "Unable to write to device");
-       return 1;
-    }
-
-    ibrd (Dev, buf, 101);
-    if (ibsta & ERR) {
-       GPIBCleanup(Dev, "Unable to read data from device");
-       return 1;
-    }
-    printf("Device Id: %s\n",buf);
 
     if (identify_flash_op) {
         if (flash_identify(base) == -1) {
@@ -737,7 +752,7 @@ int main(int argc, char **argv)
                 return 1;
             }
         if ((addr % 0x1000) == 0)
-                fprintf(stderr, "WRITE %08x %3d%%\r",  addr, ((addr -base) * 100)/length);
+            fprintf(stderr, "WRITE %08x %3d%%\r",  addr, ((addr -base) * 100)/length);
             if (write_memory(addr, buf, readlen) == -1)
                 return 1;
             addr += readlen;
